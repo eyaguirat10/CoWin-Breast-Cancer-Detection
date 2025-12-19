@@ -1,79 +1,84 @@
-# WeWomen — AI-Powered Breast Cancer Detection, Subtyping & Recommendations
+# WeWomen — AI-Powered Breast Cancer Detection, Clustering & Recommendations
 
-WeWomen is an end-to-end clinical decision support concept that combines:
-- **DSO1 (Classification):** real-time malignancy prediction
-- **DSO2 (Clustering):** metabolic subtype / risk profile assignment
-- **DSO3 (Recommendations):** personalized guidance with an LLM used **only as an explanation layer**
+> Web platform for breast cancer decision support: **diagnosis prediction (DSO1)**, **metabolic risk clustering (DSO2)**, and **personalized recommendations (DSO3)**, with separate experiences for **doctors** and **patients**.
 
-> This project is designed as **decision support**, not autonomous diagnosis. Outputs must be clinically validated by a healthcare professional.
-
----
-
-## Product snapshot
-
-### Roles & UI
-- **Patient experience**
-  - Sign up / sign in
-  - Personal dashboard with health summary, reminders, and tools
-  - “Patient Education Center” (articles, videos, downloadable resources)
+## Product Overview
+- **Doctor portal**
+  - Patient list & risk overview
+  - **Breast cancer prediction (DSO1)** from clinical features
+  - **Profile assignment / metabolic cluster (DSO2)**
+  - Patient history (stored predictions + assigned profile)
+- **Patient portal**
+  - Health dashboard
+  - Personalized recommendations & risk context
+  - Patient education center (articles, videos, downloadable resources)
   - Appointment booking flow
-  - “Patient Health Guide” form for entering biomarker data
 
-- **Doctor experience**
-  - Doctor dashboard (patient list + risk labels)
-  - **Breast Cancer Prediction (DSO1)** modal: enter features → run prediction → view result + probabilities
-  - **Assign Patient Profile (DSO2)** modal: enter biomarkers → assign cluster/profile → interpretation
-  - Patient medical history view (stored DSO1 + DSO2 outcomes)
+> UI snapshots are available in the deployment document (login/register, patient dashboard, education center, doctor dashboard, prediction modal, patient history modal).  
 
 ---
 
-## What’s inside (Data Science)
+## Data Science Objectives (CRISP-DM aligned)
+### DSO1 — Binary Classification (Benign vs Malignant)
+- **Dataset:** Wisconsin Diagnostic Breast Cancer (WDBC)
+- **Goal:** classify tumors as **Benign (0)** or **Malignant (1)**
+- **Models implemented:** XGBoost, Random Forest, SVM, KNN, MLP, Softmax Regression, Linear Regression baseline, GRU-SVM hybrid
+- **Top results (from report):**
+  - **MLP:** 99.22% accuracy, AUC ≈ 0.999
+  - **XGBoost:** 98.44% accuracy, AUC ≈ 0.998
+  - Strong alternatives: SVM variants, Random Forest
 
-### DSO1 — Tumor Classification (Supervised Learning)
-- Goal: classify tumor as benign vs malignant
-- Reported top models for deployment:
-  - **MLP ~99.22% accuracy**
-  - **XGBoost ~98.44% accuracy**
+### DSO2 — Clustering Cancer Patterns (Metabolic Profiles)
+- **Dataset:** Coimbra Breast Cancer Dataset
+- **Features:** Age, BMI, Glucose, Insulin, HOMA, Leptin, Adiponectin, Resistin, MCP-1
+- **Approach:** clustering explored via Elbow/Silhouette/Dendrogram; **K-Means** retained as best-performing structure in k=3 evaluation (cohesion/separation)
+- **Interpretation:** clusters reflect a gradient of metabolic risk (moderate → intermediate → severe)
 
-### DSO2 — Patient Subtyping (Unsupervised Learning)
-- Goal: identify clinically interpretable metabolic subtypes
-- Selected approach:
-  - **K-Means (k=3)** (best overall clustering quality vs alternatives)
-
-### DSO3 — Hybrid Recommendation System (+ LLM explanation)
-- Goal: generate recommendations as a **clinical decision support** output, evaluated by:
-  - functional validity
-  - clinical coherence
-  - usability
-  - scenario-based validation
-- LLM is used to produce:
-  - **Doctor-oriented**: clinical summaries, risk stratification, prioritized interventions, monitoring notes
-  - **Patient-oriented**: simplified language, actionable lifestyle advice
-- Important: the LLM does **not** change the medical logic—only explains it.
-
----
-
-## End-to-end pipeline (high level)
-
-1. **Input:** patient biomarker data  
-2. **Preprocessing:** scaling / encoding / feature selection  
-3. **Classification (DSO1):** malignancy prediction  
-4. **Clustering (DSO2):** metabolic subtype assignment  
-5. **Recommendation (DSO3):** personalized guidance generation  
-6. **Output:** role-based reports (doctor vs patient)
+### DSO3 — Recommendation System (Hybrid: Content + Knowledge)
+- **Core logic**
+  - Build **healthy reference baseline** (mean/std/min/max + percentiles)
+  - Compute **Z-scores** per biomarker vs healthy baseline
+  - Map deviations to severity labels: Normal / Mild / Moderate / Severe
+  - Predict cluster assignment (K-Means context) + compute overall severity score
+  - Generate biomarker-specific + cluster-level recommendations
+- **Explainability layer (LLM)**
+  - LLM rewrites outputs for two audiences:
+    - **Doctor-oriented:** clinical/technical language, monitoring priorities, red flags
+    - **Patient-oriented:** simplified, actionable guidance
+  - LLM does **not** change decision logic (rewrite-only layer)
 
 ---
 
-## Safety & clinical integration principles
-
-- Human oversight is mandatory for all diagnoses
-- Predictions must be clinically validated
-- Clear communication of confidence/probabilities
-- Transparent explanations and auditability (recommended)
+## System Architecture (Conceptual)
+- **Frontend (Web UI)**
+  - Authentication (register/login)
+  - Patient dashboard, education center, appointment flow
+  - Doctor dashboard: list + actions (predict / assign profile / history)
+- **Backend API**
+  - User management + roles (Doctor/Patient)
+  - Prediction endpoints (DSO1)
+  - Clustering/profile assignment endpoints (DSO2)
+  - Recommendation endpoints (DSO3)
+  - Persistence (users, patients, predictions, profiles, history)
+- **ML Layer**
+  - Preprocessing pipeline (scaling, feature selection where needed)
+  - Model artifacts (trained weights/serializations)
+  - Evaluation utilities (metrics, ROC, confusion matrix, explainability)
 
 ---
 
-## Repository structure (suggested)
-
-> Adjust these names to match your actual folders.
-
+## Repository Structure (Recommended)
+```txt
+.
+├─ frontend/                  # Web UI (if applicable)
+├─ backend/                   # API + auth + persistence
+├─ ml/
+│  ├─ training/               # training scripts
+│  ├─ inference/              # inference pipelines
+│  ├─ models/                 # saved models (gitignored if large)
+│  └─ evaluation/             # metrics, plots, explainability
+├─ notebooks/                 # experiments / EDA
+├─ docs/                      # report, diagrams, screenshots
+├─ data/                      # local datasets (gitignored)
+├─ requirements.txt
+└─ README.md
