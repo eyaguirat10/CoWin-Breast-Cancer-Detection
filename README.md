@@ -8,6 +8,7 @@
   - **Breast cancer prediction (DSO1)** from clinical features
   - **Profile assignment / metabolic cluster (DSO2)**
   - Patient history (stored predictions + assigned profile)
+  - Personalized recommendations & risk context for the patients 
 - **Patient portal**
   - Health dashboard
   - Personalized recommendations & risk context
@@ -49,36 +50,31 @@
 
 ---
 
-## System Architecture (Conceptual)
-- **Frontend (Web UI)**
+## System Architecture
+- **Frontend (HTML/CSS/JS)**
   - Authentication (register/login)
-  - Patient dashboard, education center, appointment flow
-  - Doctor dashboard: list + actions (predict / assign profile / history)
-- **Backend API**
-  - User management + roles (Doctor/Patient)
-  - Prediction endpoints (DSO1)
-  - Clustering/profile assignment endpoints (DSO2)
-  - Recommendation endpoints (DSO3)
-  - Persistence (users, patients, predictions, profiles, history)
+  - Patient dashboard (biomarkers input, severity view, recommendations)
+  - Education center (articles/videos/resources)
+  - Appointment booking flow
+  - Doctor dashboard: patient list + actions (predict / assign profile / view history)
+
+- **Backend API (FastAPI)**
+  - Authentication + role-based access (**Doctor / Patient**)
+  - REST endpoints:
+    - **DSO1**: prediction endpoints (benign/malignant classification)
+    - **DSO2**: clustering/profile assignment endpoints (K-Means metabolic profiles)
+    - **DSO3**: recommendation endpoints (rules + severity scoring + explanations)
+  - Persistence layer:
+    - Users, patients, biomarker records, predictions, assigned profiles, history logs
+  - Validation & serialization:
+    - Pydantic schemas for request/response models
+
 - **ML Layer**
-  - Preprocessing pipeline (scaling, feature selection where needed)
-  - Model artifacts (trained weights/serializations)
-  - Evaluation utilities (metrics, ROC, confusion matrix, explainability)
+  - Preprocessing pipeline:
+    - cleaning, normalization/scaling, feature preparation
+  - Model artifacts:
+    - trained model files (e.g., XGBoost/MLP/SVM, K-Means) loaded by the FastAPI service
+  - Evaluation utilities:
+    - metrics (Accuracy, Precision/Recall/F1), ROC/AUC, confusion matrix
+    - explainability outputs (feature importance / interpretation layer)
 
----
-
-## Repository Structure (Recommended)
-```txt
-.
-├─ frontend/                  # Web UI (if applicable)
-├─ backend/                   # API + auth + persistence
-├─ ml/
-│  ├─ training/               # training scripts
-│  ├─ inference/              # inference pipelines
-│  ├─ models/                 # saved models (gitignored if large)
-│  └─ evaluation/             # metrics, plots, explainability
-├─ notebooks/                 # experiments / EDA
-├─ docs/                      # report, diagrams, screenshots
-├─ data/                      # local datasets (gitignored)
-├─ requirements.txt
-└─ README.md
