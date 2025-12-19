@@ -1,4 +1,4 @@
-# WeWomen — AI-Powered Breast Cancer Detection, Clustering & Recommendations
+# 🎀 WeWomen — AI-Powered Breast Cancer Detection, Clustering & Recommendations 🎀
 
 > Web platform for breast cancer decision support: **diagnosis prediction (DSO1)**, **metabolic risk clustering (DSO2)**, and **personalized recommendations (DSO3)**, with separate experiences for **doctors** and **patients**.
 
